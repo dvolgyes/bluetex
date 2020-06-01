@@ -177,8 +177,8 @@ def test_over_frac():
 
 
 def test_over_frac_warn():
-    input_string = "Some $2\\over 3^{4+x}$."
     with pytest.warns(UserWarning):
+        input_string = "Some $2\\over 3^{4+x}$."
         out = blacktex.clean(input_string)
     assert out == "Some $2\\over 3^{4+x}$."
     return

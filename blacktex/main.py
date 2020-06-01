@@ -30,8 +30,7 @@ def _remove_multiple_spaces(string):
 
 
 def _remove_multiple_newlines(string):
-    string = re.sub("\n\n\n\n", "\n\n\n", string)
-    return string
+    return re.sub("\n\n\n\n", "\n\n\n", string)
 
 
 def _remove_whitespace_around_brackets(string):
@@ -50,14 +49,11 @@ def _replace_dollar_dollar(string):
     locations = [m.start() for m in p.finditer(string)]
     assert len(locations) % 2 == 0
 
-    k = 0
     ranges = []
     replacements = []
-    while k < len(locations):
+    for k in range(0, len(locations), 2):
         ranges.append((locations[k], locations[k + 1] + 2))
         replacements.append("\\[" + string[locations[k] + 2 : locations[k + 1]] + "\\]")
-        k += 2
-
     return _substitute_string_ranges(string, ranges, replacements)
 
 
@@ -77,13 +73,11 @@ def _replace_obsolete_text_mods(string):
 
 
 def _add_space_after_single_exponent(string):
-    string = re.sub("\\^([^{\\\\])([^\\s\\$})])", r"^\1 \2", string)
-    return string
+    return re.sub("\\^([^{\\\\])([^\\s\\$})])", r"^\1 \2", string)
 
 
 def _replace_dots(string):
-    string = re.sub("\\.\\.\\.", "\\\\dots", string)
-    return string
+    return re.sub("\\.\\.\\.", "\\\\dots", string)
 
 
 def _replace_punctuation_outside_math(string):
@@ -112,8 +106,7 @@ def _add_nbsp_before_reference(string):
 
 
 def _replace_double_nbsp(string):
-    string = re.sub("~~", "\\\\quad ", string)
-    return string
+    return re.sub("~~", "\\\\quad ", string)
 
 
 def _replace_nbsp_space(string):
@@ -233,7 +226,7 @@ def _add_curly_brackets_around_round_brackets_with_exponent(string):
             k -= 1
         k += 1
 
-        if k - 5 >= 0 and string[k - 5 : k] == "\\left":
+        if k >= 5 and string[k - 5 : k] == "\\left":
             insert.append(k - 5)
         else:
             insert.append(k)
