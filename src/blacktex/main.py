@@ -207,7 +207,7 @@ def _add_linebreak_after_double_backslash(string: str) -> str:
 def _add_backslash_for_keywords(string: str) -> str:
     insert = []
     for keyword in ["max", "min", "log", "sin", "cos", "exp"]:
-        p = re.compile(fr"[^A-Za-z]{keyword}[^A-Za-z]")
+        p = re.compile(rf"[^A-Za-z]{keyword}[^A-Za-z]")
         locations = [m.start() for m in p.finditer(string)]
         for loc in locations:
             if string[loc] != "\\":
