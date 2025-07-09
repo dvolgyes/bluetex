@@ -1,7 +1,7 @@
-- id: blacktex
-  name: blacktex
+- id: bluetex
+  name: bluetex
   description: "Clean up LaTeX files."
-  entry: blacktex
+  entry: bluetex
   language: python
   language_version: python3
   types: ['tex']

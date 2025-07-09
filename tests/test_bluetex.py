@@ -1,6 +1,6 @@
 import pytest
 
-import blacktex
+import bluetex as blacktex
 
 
 @pytest.mark.parametrize(
@@ -53,7 +53,7 @@ import blacktex
         # punctuation outside math:
         ("$a+b.$", "\\(a+b\\)."),
         (".$a+b$", ".\\(a+b\\)"),
-        # <https://github.com/nschloe/blacktex/issues/43>
+        # <https://github.com/nschloe/bluetex/issues/43>
         (r"$a$\,$b$", r"\(a\)\,\(b\)"),
         # whitespace before punctuation:
         ("Some text .", "Some text."),
@@ -134,7 +134,7 @@ import blacktex
         (r"20\% \SI{30}{\%}", r"\SI{20}{\%} \SI{30}{\%}"),
         # escaped percentage sign:
         (r"25\% gain", r"\SI{25}{\%} gain"),
-        # https://github.com/nschloe/blacktex/issues/46
+        # https://github.com/nschloe/bluetex/issues/46
         (r"\rightline{\bf a}", r"\rightline{\textbf{a}}"),
     ],
 )

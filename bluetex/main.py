@@ -1,7 +1,12 @@
-from __future__ import annotations
+"""Core LaTeX cleaning functionality for bluetex.
+
+This module provides the main cleaning function and various transformation
+functions to improve LaTeX document formatting and modernize outdated syntax.
+"""
 
 import re
-from typing import Callable
+from collections.abc import Callable
+from typing import Any
 
 from pylatexenc.latexwalker import (
     LatexCharsNode,
@@ -16,7 +21,21 @@ from pylatexenc.latexwalker import (
 from pylatexenc.macrospec import ParsedMacroArgs
 
 
-def _traverse_tree(nodelist: list, funs: list[Callable], is_math_mode: bool = False):
+def _traverse_tree(
+    nodelist: list[Any],
+    funs: list[Callable[..., Any]],
+    is_math_mode: bool = False,
+) -> list[Any]:
+    """Traverse the LaTeX AST and apply transformation functions.
+
+    Args:
+        nodelist: List of LaTeX nodes to process
+        funs: List of transformation functions to apply
+        is_math_mode: Whether we're currently in math mode
+
+    Returns:
+        Transformed list of LaTeX nodes
+    """
     for fun in funs:
         nodelist_new = []
         for k, node in enumerate(nodelist):
@@ -34,8 +53,16 @@ def _traverse_tree(nodelist: list, funs: list[Callable], is_math_mode: bool = Fa
     return nodelist
 
 
-def _macro(macroname, *nodelists):
-    """Creates a pylatexenc node that corresponds to \\macroname{nodelist}"""
+def _macro(macroname: str, *nodelists: list[Any]) -> Any:
+    r"""Create a LaTeX macro node.
+
+    Args:
+        macroname: Name of the macro (without backslash)
+        *nodelists: Variable number of node lists for macro arguments
+
+    Returns:
+        LaTeX macro node corresponding to \macroname{nodelist}
+    """
     return LatexMacroNode(
         macroname=macroname,
         nodeargd=ParsedMacroArgs(
@@ -45,8 +72,15 @@ def _macro(macroname, *nodelists):
     )
 
 
-def _remove_comments(node, *_):
-    """Remove comments."""
+def _remove_comments(node: Any, *_: Any) -> Any | None:
+    """Remove LaTeX comments from the document.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        None if node is a comment, otherwise the original node
+    """
     # TODO unless the comment character is the last non-whitespace character in
     # a line. (This is often used in macros etc.)
     if isinstance(node, LatexCommentNode):
@@ -54,23 +88,49 @@ def _remove_comments(node, *_):
     return node
 
 
-def _replace_dollar_dollar(node, *_):
-    """Replace $$...$$ by \\[...\\]."""
+def _replace_dollar_dollar(node: Any, *_: Any) -> Any:
+    r"""Replace $$...$$ with \[...\] for better LaTeX style.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with updated math delimiters
+    """
     if isinstance(node, LatexMathNode) and node.delimiters == ("$$", "$$"):
         node.delimiters = ("\\[", "\\]")
     return node
 
 
-def _replace_dollar(node, *_):
-    """Replace $...$ by \\(...\\). See <https://tex.stackexchange.com/q/510/13262>."""
+def _replace_dollar(node: Any, *_: Any) -> Any:
+    r"""Replace $...$ with \(...\) for better LaTeX style.
+
+    See: https://tex.stackexchange.com/q/510/13262
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with updated math delimiters
+    """
     if isinstance(node, LatexMathNode) and node.delimiters == ("$", "$"):
         node.delimiters = ("\\(", "\\)")
     return node
 
 
-def _replace_obsolete_text_mods(node, _, prev_nodes, __):
-    r"""Replace {\it foo} by \textit{foo} etc"""
-    # bracket, don't replace; see <https://github.com/nschloe/blacktex/issues/46>.
+def _replace_obsolete_text_mods(
+    node: Any, _: Any, prev_nodes: list[Any], __: Any
+) -> Any:
+    r"""Replace obsolete text modifications like {\it foo} with \textit{foo}.
+
+    Args:
+        node: LaTeX node to process
+        prev_nodes: Previous nodes in the list
+
+    Returns:
+        Modified node with modern text formatting commands
+    """
+    # bracket, don't replace; see <https://github.com/nschloe/bluetex/issues/46>.
     replacements = [
         ("it", "textit"),
         ("bf", "textbf"),
@@ -102,7 +162,15 @@ def _replace_obsolete_text_mods(node, _, prev_nodes, __):
     return node
 
 
-def _replace_dots(node, *_):
+def _replace_dots(node: Any, *_: Any) -> Any:
+    r"""Replace \cdots with \dots and ... with \dots.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with standardized dots
+    """
     if isinstance(node, LatexMacroNode) and node.macroname == "cdots":
         node.macroname = "dots"
     if isinstance(node, LatexCharsNode) and "..." in node.chars:
@@ -110,7 +178,15 @@ def _replace_dots(node, *_):
     return node
 
 
-def _replace_over(node, *_):
+def _replace_over(node: Any, *_: Any) -> Any:
+    r"""Replace \over with \frac for better LaTeX style.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with \frac instead of \over
+    """
     if not isinstance(node, LatexGroupNode):
         return node
 
@@ -127,13 +203,30 @@ def _replace_over(node, *_):
     return _macro("frac", node.nodelist[:k0], node.nodelist[k0 + 1 :])
 
 
-def _replace_def_by_newcommand(node, *_):
+def _replace_def_by_newcommand(node: Any, *_: Any) -> Any:
+    r"""Replace \def with \newcommand for better LaTeX style.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with \newcommand instead of \def
+    """
     if isinstance(node, LatexMacroNode) and node.macroname == "def":
         node.macroname = "newcommand"
     return node
 
 
-def _add_backslash_for_keywords(node, is_math_mode, *_):
+def _add_backslash_for_keywords(node: Any, is_math_mode: bool, *_: Any) -> Any:
+    """Add backslash before math keywords in math mode.
+
+    Args:
+        node: LaTeX node to process
+        is_math_mode: Whether we're in math mode
+
+    Returns:
+        Modified node with properly formatted math keywords
+    """
     if not is_math_mode:
         return node
     if not isinstance(node, LatexCharsNode):
@@ -143,7 +236,15 @@ def _add_backslash_for_keywords(node, is_math_mode, *_):
     return node
 
 
-def _replace_eqnarray(node, *_):
+def _replace_eqnarray(node: Any, *_: Any) -> Any:
+    """Replace deprecated eqnarray environment with align.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with align environment instead of eqnarray
+    """
     if not isinstance(node, LatexEnvironmentNode):
         return node
     # Also set envname, should be removed at some point
@@ -157,7 +258,15 @@ def _replace_eqnarray(node, *_):
     return node
 
 
-def _replace_colon_equal_by_coloneqq(node, *_):
+def _replace_colon_equal_by_coloneqq(node: Any, *_: Any) -> Any:
+    r"""Replace := with \coloneqq and =: with \eqqcolon.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with proper mathematical assignment operators
+    """
     if not isinstance(node, LatexCharsNode):
         return node
     node.chars = re.sub(r":\s*=", r"\\coloneqq ", node.chars)
@@ -165,14 +274,30 @@ def _replace_colon_equal_by_coloneqq(node, *_):
     return node
 
 
-def _add_space_after_single_subsuperscript(node, *_):
+def _add_space_after_single_subsuperscript(node: Any, *_: Any) -> Any:
+    """Add space after single character superscripts for better formatting.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with improved spacing
+    """
     if not isinstance(node, LatexCharsNode):
         return node
     node.chars = re.sub(r"([\^])([^{\\])([^_\^\s\$})])", r"\1\2 \3", node.chars)
     return node
 
 
-def _remove_whitespace_before_punctuation(node, *_):
+def _remove_whitespace_before_punctuation(node: Any, *_: Any) -> Any:
+    """Remove unwanted whitespace before punctuation marks.
+
+    Args:
+        node: LaTeX node to process
+
+    Returns:
+        Modified node with cleaned punctuation spacing
+    """
     if not isinstance(node, LatexCharsNode):
         return node
     node.chars = re.sub(r"\s+([\.,;!\?\":])", r"\1", node.chars)
@@ -280,10 +405,27 @@ def _replace_punctuation_at_math_end(string: str) -> str:
 
 
 def clean(string: str, keep_comments: bool = False, keep_dollar: bool = False) -> str:
+    """Clean and format LaTeX document text.
+
+    Applies various transformations to improve LaTeX formatting:
+    - Removes comments (unless keep_comments=True)
+    - Modernizes math delimiters (unless keep_dollar=True)
+    - Replaces obsolete commands with modern equivalents
+    - Improves spacing and formatting
+    - Standardizes environment usage
+
+    Args:
+        string: LaTeX document content to clean
+        keep_comments: If True, preserve comments in output
+        keep_dollar: If True, preserve $...$ math delimiters
+
+    Returns:
+        Cleaned LaTeX document content
+    """
     out = string
     out = _remove_trailing_whitespace(out)
 
-    # now apply all functions that operate on the pylatexenc tree
+    # Apply all functions that operate on the pylatexenc tree
     funs = []
     if not keep_comments:
         funs.append(_remove_comments)
@@ -301,7 +443,7 @@ def clean(string: str, keep_comments: bool = False, keep_dollar: bool = False) -
         _add_space_after_single_subsuperscript,
         _remove_whitespace_before_punctuation,
     ]
-    #
+    # Parse LaTeX content into AST and apply transformations
     w = LatexWalker(out)
     nodelist, _, _ = w.get_latex_nodes(pos=0)
     nodelist = _traverse_tree(nodelist, funs)

@@ -3,9 +3,10 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "blacktex"
-authors = [{name = "Nico Schlömer", email = "nico.schloemer@gmail.com"}]
-description = "Clean up your LaTeX files"
+name = "bluetex"
+authors = [{name = "David Völgyes", email = "david.volgyes@ieee.org"}]
+maintainers = [{name = "David Völgyes", email = "david.volgyes@ieee.org"}]
+description = "Clean up your LaTeX files (fork of blacktex)"
 readme = "README.md"
 license = {file = "LICENSE"}
 classifiers = [
@@ -14,10 +15,8 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Text Editors :: Text Processing",
   "Topic :: Text Processing",
   "Topic :: Text Processing :: Markup",
@@ -26,16 +25,30 @@ classifiers = [
 ]
 keywords = ["latex", "linting"]
 dynamic = ["version"]
-requires-python = ">=3.7"
-dependencies = ["pylatexenc"]
+requires-python = ">=3.12"
+dependencies = ["pylatexenc", "click", "loguru"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "coverage"]
 
 [project.urls]
-Code = "https://github.com/nschloe/blacktex"
-Issues = "https://github.com/nschloe/blacktex/issues"
-Funding = "https://github.com/sponsors/nschloe"
+Code = "https://github.com/dvolgyes/bluetex"
+Issues = "https://github.com/dvolgyes/bluetex/issues"
+Funding = "https://github.com/sponsors/dvolgyes"
 
 [project.scripts]
-blacktex = "blacktex.cli:main"
+bluetex = "bluetex.cli.main:main"
 
 [tool.isort]
 profile = "black"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "coverage>=7.9.2",
+    "flake8>=7.3.0",
+    "isort>=6.0.1",
+    "mypy>=1.16.1",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
