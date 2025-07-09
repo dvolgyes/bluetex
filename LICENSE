@@ -1,4 +1,20 @@
-                    GNU GENERAL PUBLIC LICENSE
+ ================================================================================
+
+BLUETEX COPYRIGHT NOTICE
+
+This project is a fork of the original Blacktex project by Nico Schlömer.
+Original project: https://github.com/texworld/blacktex/
+
+Copyright (C) 2018-2022 Nico Schlömer (original author)
+    All contributions up to commit 9df96918bd9075ddd659a9e272e16c6426011e31
+    (dated 2022-02-16)
+
+Copyright (C) 2025 David Völgyes (fork maintainer)
+    All subsequent contributions and modifications
+
+================================================================================
+
+                   GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
