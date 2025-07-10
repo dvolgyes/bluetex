@@ -147,6 +147,8 @@ def _replace_obsolete_text_mods(
     if not isinstance(node, LatexGroupNode):
         return node
     # See if the first child in the group is a macro, e.g., {\it ...}
+    if not node.nodelist:
+        return node
     child0 = node.nodelist[0]
     if not isinstance(child0, LatexMacroNode):
         return node
