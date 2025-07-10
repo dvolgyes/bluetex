@@ -11,17 +11,11 @@
 - **Fork maintainer**: David Völgyes (from 2025 onwards)
 - **Original project**: https://github.com/texworld/blacktex/
 
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
-
 Bluetex is a command-line tool that helps with article editing in LaTeX. It removes all
 comments from a given file and corrects [some common
 anti-patterns](http://mirrors.ctan.org/info/l2tabu/english/l2tabuen.pdf).
 
-Install with:
-
-```
-pip install -U bluetex
-```
+Install it from git for now.
 
 Then, with
 
