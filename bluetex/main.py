@@ -5,8 +5,8 @@ functions to improve LaTeX document formatting and modernize outdated syntax.
 """
 
 import re
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Sequence
+from typing import cast
 
 from pylatexenc.latexwalker import (
     LatexCharsNode,
@@ -20,12 +20,22 @@ from pylatexenc.latexwalker import (
 )
 from pylatexenc.macrospec import ParsedMacroArgs
 
+type LatexNode = (
+    LatexCharsNode
+    | LatexCommentNode
+    | LatexEnvironmentNode
+    | LatexGroupNode
+    | LatexMacroNode
+    | LatexMathNode
+)
+type TreeTransform = Callable[..., LatexNode | None]
+
 
 def _traverse_tree(
-    nodelist: list[Any],
-    funs: list[Callable[..., Any]],
+    nodelist: list[LatexNode],
+    funs: Sequence[TreeTransform],
     is_math_mode: bool = False,
-) -> list[Any]:
+) -> list[LatexNode]:
     """Traverse the LaTeX AST and apply transformation functions.
 
     Args:
@@ -37,7 +47,7 @@ def _traverse_tree(
         Transformed list of LaTeX nodes
     """
     for fun in funs:
-        nodelist_new = []
+        nodelist_new: list[LatexNode] = []
         for k, node in enumerate(nodelist):
             out = fun(node, is_math_mode, nodelist[:k], nodelist[k + 1 :])
             if out is not None:
@@ -45,15 +55,22 @@ def _traverse_tree(
         nodelist = nodelist_new
 
     for node in nodelist:
-        if hasattr(node, "nodelist"):
-            node.nodelist = _traverse_tree(
-                node.nodelist, funs, is_math_mode | isinstance(node, LatexMathNode)
+        child_nodes = getattr(node, "nodelist", None)
+        if isinstance(child_nodes, list):
+            setattr(
+                node,
+                "nodelist",
+                _traverse_tree(
+                    child_nodes,
+                    funs,
+                    is_math_mode | isinstance(node, LatexMathNode),
+                ),
             )
 
     return nodelist
 
 
-def _macro(macroname: str, *nodelists: list[Any]) -> Any:
+def _macro(macroname: str, *nodelists: list[LatexNode]) -> LatexMacroNode:
     r"""Create a LaTeX macro node.
 
     Args:
@@ -63,16 +80,19 @@ def _macro(macroname: str, *nodelists: list[Any]) -> Any:
     Returns:
         LaTeX macro node corresponding to \macroname{nodelist}
     """
-    return LatexMacroNode(
-        macroname=macroname,
-        nodeargd=ParsedMacroArgs(
-            argspec="{" * len(nodelists),
-            argnlist=[LatexGroupNode(nodelist=nodelist) for nodelist in nodelists],
+    return cast(
+        LatexMacroNode,
+        LatexMacroNode(
+            macroname=macroname,
+            nodeargd=ParsedMacroArgs(
+                argspec="{" * len(nodelists),
+                argnlist=[LatexGroupNode(nodelist=nodelist) for nodelist in nodelists],
+            ),
         ),
     )
 
 
-def _remove_comments(node: Any, *_: Any) -> Any | None:
+def _remove_comments(node: LatexNode, *_: object) -> LatexNode | None:
     """Remove LaTeX comments from the document.
 
     Args:
@@ -88,7 +108,7 @@ def _remove_comments(node: Any, *_: Any) -> Any | None:
     return node
 
 
-def _replace_dollar_dollar(node: Any, *_: Any) -> Any:
+def _replace_dollar_dollar(node: LatexNode, *_: object) -> LatexNode:
     r"""Replace $$...$$ with \[...\] for better LaTeX style.
 
     Args:
@@ -102,7 +122,7 @@ def _replace_dollar_dollar(node: Any, *_: Any) -> Any:
     return node
 
 
-def _replace_dollar(node: Any, *_: Any) -> Any:
+def _replace_dollar(node: LatexNode, *_: object) -> LatexNode:
     r"""Replace $...$ with \(...\) for better LaTeX style.
 
     See: https://tex.stackexchange.com/q/510/13262
@@ -119,8 +139,8 @@ def _replace_dollar(node: Any, *_: Any) -> Any:
 
 
 def _replace_obsolete_text_mods(
-    node: Any, _: Any, prev_nodes: list[Any], __: Any
-) -> Any:
+    node: LatexNode, _: object, prev_nodes: list[LatexNode], __: object
+) -> LatexNode:
     r"""Replace obsolete text modifications like {\it foo} with \textit{foo}.
 
     Args:
@@ -164,7 +184,7 @@ def _replace_obsolete_text_mods(
     return node
 
 
-def _replace_dots(node: Any, *_: Any) -> Any:
+def _replace_dots(node: LatexNode, *_: object) -> LatexNode:
     r"""Replace \cdots with \dots and ... with \dots.
 
     Args:
@@ -180,7 +200,7 @@ def _replace_dots(node: Any, *_: Any) -> Any:
     return node
 
 
-def _replace_over(node: Any, *_: Any) -> Any:
+def _replace_over(node: LatexNode, *_: object) -> LatexNode:
     r"""Replace \over with \frac for better LaTeX style.
 
     Args:
@@ -205,7 +225,7 @@ def _replace_over(node: Any, *_: Any) -> Any:
     return _macro("frac", node.nodelist[:k0], node.nodelist[k0 + 1 :])
 
 
-def _replace_def_by_newcommand(node: Any, *_: Any) -> Any:
+def _replace_def_by_newcommand(node: LatexNode, *_: object) -> LatexNode:
     r"""Replace \def with \newcommand for better LaTeX style.
 
     Args:
@@ -219,7 +239,9 @@ def _replace_def_by_newcommand(node: Any, *_: Any) -> Any:
     return node
 
 
-def _add_backslash_for_keywords(node: Any, is_math_mode: bool, *_: Any) -> Any:
+def _add_backslash_for_keywords(
+    node: LatexNode, is_math_mode: bool, *_: object
+) -> LatexNode:
     """Add backslash before math keywords in math mode.
 
     Args:
@@ -238,7 +260,7 @@ def _add_backslash_for_keywords(node: Any, is_math_mode: bool, *_: Any) -> Any:
     return node
 
 
-def _replace_eqnarray(node: Any, *_: Any) -> Any:
+def _replace_eqnarray(node: LatexNode, *_: object) -> LatexNode:
     """Replace deprecated eqnarray environment with align.
 
     Args:
@@ -260,7 +282,7 @@ def _replace_eqnarray(node: Any, *_: Any) -> Any:
     return node
 
 
-def _replace_colon_equal_by_coloneqq(node: Any, *_: Any) -> Any:
+def _replace_colon_equal_by_coloneqq(node: LatexNode, *_: object) -> LatexNode:
     r"""Replace := with \coloneqq and =: with \eqqcolon.
 
     Args:
@@ -276,7 +298,7 @@ def _replace_colon_equal_by_coloneqq(node: Any, *_: Any) -> Any:
     return node
 
 
-def _add_space_after_single_subsuperscript(node: Any, *_: Any) -> Any:
+def _add_space_after_single_subsuperscript(node: LatexNode, *_: object) -> LatexNode:
     """Add space after single character superscripts for better formatting.
 
     Args:
@@ -291,7 +313,7 @@ def _add_space_after_single_subsuperscript(node: Any, *_: Any) -> Any:
     return node
 
 
-def _remove_whitespace_before_punctuation(node: Any, *_: Any) -> Any:
+def _remove_whitespace_before_punctuation(node: LatexNode, *_: object) -> LatexNode:
     """Remove unwanted whitespace before punctuation marks.
 
     Args:
@@ -319,14 +341,12 @@ def _add_spaces_around_equality_sign(string: str) -> str:
     string = re.sub(r"([^\s])&=", r"\1 &=", string)
 
     string = re.sub(r"=([^\s&])", r"= \1", string)
-    string = re.sub(r"=&([^\s])", r"=& \1", string)
-    return string
+    return re.sub(r"=&([^\s])", r"=& \1", string)
 
 
 def _si_percentage(string: str) -> str:
     # match float like https://stackoverflow.com/a/12643073/353337
-    string = re.sub(r"([+-]?([0-9]*[.])?[0-9]+)[ \t]*\\%", r"\\SI{\1}{\%}", string)
-    return string
+    return re.sub(r"([+-]?([0-9]*[.])?[0-9]+)[ \t]*\\%", r"\\SI{\1}{\%}", string)
 
 
 def _remove_space_before_tabular_column_specification(string: str) -> str:
@@ -343,8 +363,7 @@ def _remove_multiple_spaces(string: str) -> str:
 
 
 def _remove_multiple_newlines(string: str) -> str:
-    string = re.sub("[\n]{3,}", "\n\n\n", string)
-    return string
+    return re.sub("[\n]{3,}", "\n\n\n", string)
 
 
 def _remove_whitespace_around_brackets(string: str) -> str:
@@ -352,21 +371,18 @@ def _remove_whitespace_around_brackets(string: str) -> str:
     string = re.sub(r"[ \t]+}", "}", string)
     string = re.sub(r"\([ \t]+", "(", string)
     string = re.sub(r"[ \t]+\)", ")", string)
-    string = re.sub(r"[ \t]+\\right\)", r"\\right)", string)
-    return string
+    return re.sub(r"[ \t]+\\right\)", r"\\right)", string)
 
 
 def _add_nbsp_before_reference(string: str) -> str:
     string = re.sub(r"\s+\\ref{", r"~\\ref{", string)
     string = re.sub(r"\s+\\eqref{", r"~\\eqref{", string)
-    string = re.sub(r"\s+\\cite", r"~\\cite", string)
-    return string
+    return re.sub(r"\s+\\cite", r"~\\cite", string)
 
 
 def _replace_nbsp_space(string: str) -> str:
     string = re.sub("~ ", " ", string)
-    string = re.sub(" ~", " ", string)
-    return string
+    return re.sub(" ~", " ", string)
 
 
 def _add_linebreak_around_begin_end(string: str) -> str:
@@ -380,21 +396,18 @@ def _add_linebreak_around_begin_end(string: str) -> str:
     string = re.sub(r"(\\\[) *([^\n ])", r"\1\n\2", string)
 
     string = re.sub(r"([^\n ]) *(\\\])", r"\1\n\2", string)
-    string = re.sub(r"(\\\]) *([^\n ])", r"\1\n\2", string)
-    return string
+    return re.sub(r"(\\\]) *([^\n ])", r"\1\n\2", string)
 
 
 def _put_spec_on_same_line_as_environment(string: str) -> str:
     string = re.sub(r"(\\begin{.*?})\s*(\[.*?\])\n", r"\1\2", string)
-    string = re.sub(r"(\\begin{.*?})\s*(\[.*?\])([^\n])", r"\1\2\n\3", string)
-    return string
+    return re.sub(r"(\\begin{.*?})\s*(\[.*?\])([^\n])", r"\1\2\n\3", string)
 
 
 def _put_label_on_same_line_as_environment(string: str) -> str:
     out = re.sub(r"(\\begin{.*?})(\[.*?])?\s+(\\label{.*?})(\n)?", r"\1\2\3\4", string)
     out = re.sub(r"(\\section{.*?})\s+(\\label{.*?})(\n)?", r"\1\2\3", out)
-    out = re.sub(r"(\\subsection{.*?})\s+(\\label{.*?})(\n)?", r"\1\2\3", out)
-    return out
+    return re.sub(r"(\\subsection{.*?})\s+(\\label{.*?})(\n)?", r"\1\2\3", out)
 
 
 def _add_linebreak_after_double_backslash(string: str) -> str:
@@ -428,7 +441,7 @@ def clean(string: str, keep_comments: bool = False, keep_dollar: bool = False) -
     out = _remove_trailing_whitespace(out)
 
     # Apply all functions that operate on the pylatexenc tree
-    funs = []
+    funs: list[TreeTransform] = []
     if not keep_comments:
         funs.append(_remove_comments)
     funs.append(_replace_dollar_dollar)
@@ -448,6 +461,7 @@ def clean(string: str, keep_comments: bool = False, keep_dollar: bool = False) -
     # Parse LaTeX content into AST and apply transformations
     w = LatexWalker(out)
     nodelist, _, _ = w.get_latex_nodes(pos=0)
+    nodelist = cast(list[LatexNode], nodelist)
     nodelist = _traverse_tree(nodelist, funs)
     out = nodelist_to_latex(nodelist)
 
@@ -465,5 +479,4 @@ def clean(string: str, keep_comments: bool = False, keep_dollar: bool = False) -
     out = _add_spaces_around_equality_sign(out)
     out = _remove_multiple_newlines(out)
     out = _remove_multiple_spaces(out)
-    out = _remove_whitespace_around_brackets(out)
-    return out
+    return _remove_whitespace_around_brackets(out)

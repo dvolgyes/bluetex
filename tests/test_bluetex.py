@@ -3,7 +3,7 @@ import pytest
 import bluetex as blacktex
 
 
-@pytest.mark.parametrize(
+@pytest.mark.parametrize(  # type: ignore[untyped-decorator]
     "string, reference",
     [
         # dollar replacement:
@@ -138,7 +138,7 @@ import bluetex as blacktex
         (r"\rightline{\bf a}", r"\rightline{\textbf{a}}"),
     ],
 )
-def test_compare(string, reference):
+def test_compare(string: str, reference: str) -> None:
     print(repr(string))
     result = blacktex.clean(string)
     print(repr(result))
@@ -146,7 +146,7 @@ def test_compare(string, reference):
     assert result == reference
 
 
-def test_readme():
+def test_readme() -> None:
     input_string = (
         "Because   of $$a+b=c$$ ({\\it Pythogoras}),\n"
         "% @johnny remember to insert name,\n"

@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -8,15 +9,15 @@ from bluetex.cli import main as legacy_main
 from bluetex.cli.main import main as click_main
 
 
-@pytest.fixture()
-def infiles(tmp_path: Path):
+@pytest.fixture()  # type: ignore[untyped-decorator]
+def infiles(tmp_path: Path) -> Generator[list[Path], None, None]:
     tmp_files = [tmp_path / f"infile_{i}.tex" for i in range(1, 4)]
     [tmp_file.write_text(f"{tmp_file.name}\na+b=c") for tmp_file in tmp_files]
     yield tmp_files
 
 
 # Tests for the legacy CLI (accessed through bluetex.cli.main which imports from legacy_cli)
-def test_cli_stdout(infiles: list[Path], capsys: CaptureFixture):
+def test_cli_stdout(infiles: list[Path], capsys: CaptureFixture[str]) -> None:
     infile = infiles[0]
 
     return_value = legacy_main([str(infile)])
@@ -28,7 +29,7 @@ def test_cli_stdout(infiles: list[Path], capsys: CaptureFixture):
     assert infile.read_text() == "infile_1.tex\na+b=c"
 
 
-def test_cli_encoding(tmp_path: Path):
+def test_cli_encoding(tmp_path: Path) -> None:
     infile = tmp_path / "infile_encoding.tex"
     result = "äöüéкий的"
     infile.write_text(result, encoding="utf8")
@@ -39,7 +40,7 @@ def test_cli_encoding(tmp_path: Path):
     assert infile.read_text(encoding="utf8") == result
 
 
-def test_cli_inplace(infiles: list[Path]):
+def test_cli_inplace(infiles: list[Path]) -> None:
     infile = infiles[0]
 
     return_value = legacy_main(["-i", str(infile)])
@@ -48,7 +49,7 @@ def test_cli_inplace(infiles: list[Path]):
     assert infile.read_text() == "infile_1.tex\na+b = c"
 
 
-def test_cli_multiple_files(infiles: list[Path]):
+def test_cli_multiple_files(infiles: list[Path]) -> None:
     return_value = legacy_main(["-i", *[str(infile) for infile in infiles]])
 
     assert return_value == 1
@@ -57,7 +58,7 @@ def test_cli_multiple_files(infiles: list[Path]):
 
 
 # Tests for the new Click-based CLI
-def test_click_cli_stdout(infiles: list[Path]):
+def test_click_cli_stdout(infiles: list[Path]) -> None:
     """Test new Click CLI with stdout output."""
     runner = CliRunner()
     infile = infiles[0]
@@ -70,7 +71,7 @@ def test_click_cli_stdout(infiles: list[Path]):
     assert infile.read_text() == "infile_1.tex\na+b=c"
 
 
-def test_click_cli_inplace(infiles: list[Path]):
+def test_click_cli_inplace(infiles: list[Path]) -> None:
     """Test new Click CLI with in-place modification."""
     runner = CliRunner()
     infile = infiles[0]
@@ -81,7 +82,7 @@ def test_click_cli_inplace(infiles: list[Path]):
     assert infile.read_text() == "infile_1.tex\na+b = c"
 
 
-def test_click_cli_multiple_files(infiles: list[Path]):
+def test_click_cli_multiple_files(infiles: list[Path]) -> None:
     """Test new Click CLI with multiple files."""
     runner = CliRunner()
 
@@ -92,7 +93,7 @@ def test_click_cli_multiple_files(infiles: list[Path]):
         assert infile.read_text() == f"{infile.name}\na+b = c"
 
 
-def test_click_cli_encoding(tmp_path: Path):
+def test_click_cli_encoding(tmp_path: Path) -> None:
     """Test new Click CLI with custom encoding."""
     runner = CliRunner()
     infile = tmp_path / "infile_encoding.tex"
@@ -105,7 +106,7 @@ def test_click_cli_encoding(tmp_path: Path):
     assert infile.read_text(encoding="utf8") == result
 
 
-def test_click_cli_keep_comments(tmp_path: Path):
+def test_click_cli_keep_comments(tmp_path: Path) -> None:
     """Test new Click CLI with keep comments option."""
     runner = CliRunner()
     infile = tmp_path / "infile_comments.tex"
@@ -117,7 +118,7 @@ def test_click_cli_keep_comments(tmp_path: Path):
     assert "% comment" in result.output
 
 
-def test_click_cli_keep_dollar(tmp_path: Path):
+def test_click_cli_keep_dollar(tmp_path: Path) -> None:
     """Test new Click CLI with keep dollar option."""
     runner = CliRunner()
     infile = tmp_path / "infile_dollar.tex"
@@ -129,7 +130,7 @@ def test_click_cli_keep_dollar(tmp_path: Path):
     assert "$b+c$" in result.output
 
 
-def test_click_cli_logfile(tmp_path: Path):
+def test_click_cli_logfile(tmp_path: Path) -> None:
     """Test new Click CLI with log file option."""
     runner = CliRunner()
     infile = tmp_path / "infile.tex"
@@ -146,7 +147,7 @@ def test_click_cli_logfile(tmp_path: Path):
     assert "Processing" in log_content
 
 
-def test_click_cli_loglevel(tmp_path: Path):
+def test_click_cli_loglevel(tmp_path: Path) -> None:
     """Test new Click CLI with different log levels."""
     runner = CliRunner()
     infile = tmp_path / "infile.tex"
@@ -161,7 +162,7 @@ def test_click_cli_loglevel(tmp_path: Path):
     assert result.exit_code == 0
 
 
-def test_click_cli_version():
+def test_click_cli_version() -> None:
     """Test new Click CLI version option."""
     runner = CliRunner()
 
@@ -172,7 +173,7 @@ def test_click_cli_version():
     assert "Python" in result.output
 
 
-def test_click_cli_help():
+def test_click_cli_help() -> None:
     """Test new Click CLI help option."""
     runner = CliRunner()
 
@@ -184,7 +185,7 @@ def test_click_cli_help():
     assert "--encoding" in result.output
 
 
-def test_click_cli_nonexistent_file():
+def test_click_cli_nonexistent_file() -> None:
     """Test new Click CLI with non-existent file."""
     runner = CliRunner()
 
@@ -194,7 +195,7 @@ def test_click_cli_nonexistent_file():
     assert "does not exist" in result.output or "No such file" in result.output
 
 
-def test_click_cli_error_handling(tmp_path: Path):
+def test_click_cli_error_handling(tmp_path: Path) -> None:
     """Test new Click CLI error handling."""
     runner = CliRunner()
 

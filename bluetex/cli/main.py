@@ -136,7 +136,7 @@ def main(
 
     if not in_place:
         # Write to stdout without trailing newline for consistency with original behavior
-        print("\n".join(stdout_parts), end="")
+        click.echo("\n".join(stdout_parts), nl=False)
 
     sys.exit(return_code)
 

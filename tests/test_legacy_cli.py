@@ -4,22 +4,24 @@ This module contains tests for the legacy argparse-based CLI to ensure
 backward compatibility is maintained.
 """
 
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
+from _pytest.capture import CaptureFixture
 
 from bluetex.legacy_cli import main as legacy_main
 
 
-@pytest.fixture()
-def infiles(tmp_path: Path):
+@pytest.fixture()  # type: ignore[untyped-decorator]
+def infiles(tmp_path: Path) -> Generator[list[Path], None, None]:
     """Create temporary test files."""
     tmp_files = [tmp_path / f"infile_{i}.tex" for i in range(1, 4)]
     [tmp_file.write_text(f"{tmp_file.name}\na+b=c") for tmp_file in tmp_files]
     yield tmp_files
 
 
-def test_legacy_cli_stdout(infiles: list[Path], capsys):
+def test_legacy_cli_stdout(infiles: list[Path], capsys: CaptureFixture[str]) -> None:
     """Test legacy CLI with stdout output."""
     infile = infiles[0]
 
@@ -33,7 +35,7 @@ def test_legacy_cli_stdout(infiles: list[Path], capsys):
     assert infile.read_text() == "infile_1.tex\na+b=c"
 
 
-def test_legacy_cli_inplace(infiles: list[Path]):
+def test_legacy_cli_inplace(infiles: list[Path]) -> None:
     """Test legacy CLI with in-place modification."""
     infile = infiles[0]
 
@@ -43,7 +45,7 @@ def test_legacy_cli_inplace(infiles: list[Path]):
     assert infile.read_text() == "infile_1.tex\na+b = c"
 
 
-def test_legacy_cli_multiple_files(infiles: list[Path]):
+def test_legacy_cli_multiple_files(infiles: list[Path]) -> None:
     """Test legacy CLI with multiple files."""
     return_value = legacy_main(["-i", *[str(infile) for infile in infiles]])
 
@@ -52,7 +54,7 @@ def test_legacy_cli_multiple_files(infiles: list[Path]):
         assert infile.read_text() == f"{infile.name}\na+b = c"
 
 
-def test_legacy_cli_encoding(tmp_path: Path):
+def test_legacy_cli_encoding(tmp_path: Path) -> None:
     """Test legacy CLI with custom encoding."""
     infile = tmp_path / "infile_encoding.tex"
     test_content = "äöüéкий的"
@@ -64,7 +66,7 @@ def test_legacy_cli_encoding(tmp_path: Path):
     assert infile.read_text(encoding="utf8") == test_content
 
 
-def test_legacy_cli_keep_comments(tmp_path: Path, capsys):
+def test_legacy_cli_keep_comments(tmp_path: Path, capsys: CaptureFixture[str]) -> None:
     """Test legacy CLI with keep comments option."""
     infile = tmp_path / "infile_comments.tex"
     infile.write_text("a+b=c % comment\n")
@@ -77,7 +79,7 @@ def test_legacy_cli_keep_comments(tmp_path: Path, capsys):
     assert "% comment" in stdout
 
 
-def test_legacy_cli_keep_dollar(tmp_path: Path, capsys):
+def test_legacy_cli_keep_dollar(tmp_path: Path, capsys: CaptureFixture[str]) -> None:
     """Test legacy CLI with keep dollar option."""
     infile = tmp_path / "infile_dollar.tex"
     infile.write_text("a $b+c$ d")
@@ -90,7 +92,7 @@ def test_legacy_cli_keep_dollar(tmp_path: Path, capsys):
     assert "$b+c$" in stdout
 
 
-def test_legacy_cli_version(capsys):
+def test_legacy_cli_version(capsys: CaptureFixture[str]) -> None:
     """Test legacy CLI version option."""
     with pytest.raises(SystemExit) as excinfo:
         legacy_main(["--version"])
@@ -101,7 +103,7 @@ def test_legacy_cli_version(capsys):
     assert "Python" in stdout
 
 
-def test_legacy_cli_help(capsys):
+def test_legacy_cli_help(capsys: CaptureFixture[str]) -> None:
     """Test legacy CLI help option."""
     with pytest.raises(SystemExit) as excinfo:
         legacy_main(["--help"])

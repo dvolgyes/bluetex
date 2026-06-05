@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["uv_build>=0.11.19,<0.12"]
+build-backend = "uv_build"
 
 [project]
 name = "bluetex"
@@ -17,6 +17,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Text Editors :: Text Processing",
   "Topic :: Text Processing",
   "Topic :: Text Processing :: Markup",
@@ -24,12 +25,12 @@ classifiers = [
   "Topic :: Utilities",
 ]
 keywords = ["latex", "linting"]
-dynamic = ["version"]
+version = "0.6.1"
 requires-python = ">=3.12"
 dependencies = ["pylatexenc", "click", "loguru"]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "coverage"]
+dev = ["pytest", "pytest-cov", "coverage", "pytest-xdist", "pre-commit"]
 
 [project.urls]
 Code = "https://github.com/dvolgyes/bluetex"
@@ -38,6 +39,19 @@ Funding = "https://github.com/sponsors/dvolgyes"
 
 [project.scripts]
 bluetex = "bluetex.cli.main:main"
+
+[tool.uv.build-backend]
+module-root = ""
+
+[tool.coverage.run]
+branch = true
+source = ["bluetex"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.coverage.xml]
+output = "coverage.xml"
 
 [tool.isort]
 profile = "black"
@@ -49,6 +63,8 @@ dev = [
     "flake8>=7.3.0",
     "isort>=6.0.1",
     "mypy>=1.16.1",
+    "pre-commit>=4.5.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "pytest-xdist>=3.8.0",
 ]

@@ -7,6 +7,8 @@ the exact same command-line interface and behavior as the original.
 """
 
 import argparse
+import sys
+from pathlib import Path
 from sys import version_info as vi
 
 from .__about__ import __version__
@@ -32,8 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     return_code = 0
 
     # Process each input file
-    for fl in args.infiles:
-        with open(fl.name, encoding=args.encoding) as f:
+    for infile in args.infiles:
+        with infile.open(encoding=args.encoding) as f:
             content = f.read()
 
         # Clean the content using the core cleaning function
@@ -42,14 +44,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.in_place:
             # Return code indicates if any changes were made
             return_code = return_code or int(content != out)
-            with open(fl.name, "w", encoding=args.encoding) as f:
+            with infile.open("w", encoding=args.encoding) as f:
                 f.write(out)
         else:
             stdout.append(out)
 
     if not args.in_place:
         # Output to stdout without trailing newline for consistency
-        print("\n".join(stdout), end="")
+        sys.stdout.write("\n".join(stdout))
 
     return return_code
 
@@ -65,7 +67,7 @@ def _get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "infiles",
         nargs="+",
-        type=argparse.FileType("r"),
+        type=Path,
         help="input LaTeX file",
     )
 
