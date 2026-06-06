@@ -3,6 +3,17 @@
   <p align="center">Clean up your LaTeX files.</p>
 </p>
 
+<p>
+  <a href="https://github.com/dvolgyes/bluetex/actions/workflows/ci-cd.yml"><img alt="CI" src="https://github.com/dvolgyes/bluetex/actions/workflows/ci-cd.yml/badge.svg" /></a>
+  <a href="https://coveralls.io/github/dvolgyes/bluetex?branch=main"><img alt="Coverage Status" src="https://coveralls.io/repos/github/dvolgyes/bluetex/badge.svg?branch=main" /></a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://pypi.org/project/bluetex/"><img alt="Version: 0.6.2" src="https://img.shields.io/badge/version-0.6.2-orange.svg" /></a>
+  <a href="https://pypi.org/project/bluetex/"><img alt="Status: Beta" src="https://img.shields.io/badge/status-beta-yellow.svg" /></a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="LICENSE"><img alt="License: GPLv3" src="https://img.shields.io/badge/license-GPLv3-green.svg" /></a>
+  <a href="https://www.python.org/"><img alt="Python: >=3.12" src="https://img.shields.io/badge/python-%3E=3.12-blue.svg" /></a>
+</p>
+
 ## Fork Notice
 
 **Bluetex** is a fork of the original [Blacktex](https://github.com/texworld/blacktex/) project by Nico Schlömer. The original project moved to a non-public development style, so this fork was created to continue public development under the name "Bluetex" to avoid confusion with the original project.
