@@ -26,15 +26,15 @@ Bluetex is a command-line tool that helps with article editing in LaTeX. It remo
 comments from a given file and corrects [some common
 anti-patterns](http://mirrors.ctan.org/info/l2tabu/english/l2tabuen.pdf).
 
-Install it from git for now.
+## Usage
 
-Then, with
+Run the package directly with `uvx`:
 
+```bash
+uvx bluetex in.tex > out.tex
 ```
-bluetex in.tex > out.tex
-```
 
-the input file
+For example, this input file
 
 ```latex
 Because   of $$a+b=c$$ ({\it Pythogoras}),
@@ -55,13 +55,27 @@ and \(y = 2^n g\) with \(n = 1,\dots,10\), we have \(\frac{\Gamma}{2} = 8\).
 
 You can use
 
-```
-bluetex -i in0.tex in1.tex ...
+```bash
+uvx bluetex -i in0.tex in1.tex ...
 ```
 
-to modify files in-place. See `bluetex -h` for all options.
+to modify files in-place. See `uvx bluetex --help` for all options.
 
-### License
+## Pre-commit hooks
+
+You can clean LaTeX files automatically before committing them to git.
+
+```yaml
+repos:
+- repo: https://github.com/dvolgyes/bluetex
+  rev: v0.6.2
+  hooks:
+  - id: bluetex
+```
+
+The hook runs `bluetex --in-place` on staged `.tex` files.
+
+## License
 
 This software is published under the [GPLv3
 license](https://www.gnu.org/licenses/gpl-3.0.en.html).
