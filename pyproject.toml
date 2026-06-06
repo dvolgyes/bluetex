@@ -25,12 +25,9 @@ classifiers = [
   "Topic :: Utilities",
 ]
 keywords = ["latex", "linting"]
-version = "0.6.1"
+version = "0.6.2"
 requires-python = ">=3.12"
-dependencies = ["pylatexenc", "click", "loguru"]
-
-[project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "coverage", "pytest-xdist", "pre-commit"]
+dependencies = ["pylatexenc~=2.10", "click~=8.2", "loguru~=0.7.3"]
 
 [project.urls]
 Code = "https://github.com/dvolgyes/bluetex"
@@ -53,18 +50,12 @@ show_missing = true
 [tool.coverage.xml]
 output = "coverage.xml"
 
-[tool.isort]
-profile = "black"
-
 [dependency-groups]
 dev = [
-    "black>=25.1.0",
-    "coverage>=7.9.2",
-    "flake8>=7.3.0",
-    "isort>=6.0.1",
-    "mypy>=1.16.1",
-    "pre-commit>=4.5.0",
-    "pytest>=8.4.1",
-    "pytest-cov>=6.2.1",
-    "pytest-xdist>=3.8.0",
+    "coverage~=7.9",
+    "flake8~=7.3",
+    "pre-commit~=4.6",
+    "pytest~=9.0",
+    "pytest-cov~=7.1",
+    "pytest-xdist~=3.8",
 ]

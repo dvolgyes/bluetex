@@ -36,7 +36,7 @@ repos:
 
 # Source: 201_ruff.yaml [central]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.15.0
+  rev: v0.15.16
   hooks:
   - id: ruff-check
     args: [--fix, --exclude, tests/, '--extend-select=ANN,YTT,ASYNC,C4,T20,RET,SIM,PTH,FLY,NPY,PD,N,UP,FURB,RUF']
@@ -51,18 +51,9 @@ repos:
     - mdformat-ruff
     - ruff
 
-# Source: 400_ty_local.yaml [central]
-- repo: local
-  hooks:
-  - id: ty
-    name: ty check
-    entry: uvx ty check . --ignore unresolved-import
-    language: system
-    types: [python]
-
 # Source: 450_mypy.yaml [central]
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.19.1
+  rev: v2.1.0
   hooks:
   - id: mypy
     args: [--ignore-missing-imports, --strict]
@@ -70,7 +61,7 @@ repos:
 
 # Source: 900_shfmt.yaml [central]
 - repo: https://github.com/maxwinterstein/shfmt-py
-  rev: v3.12.0.1
+  rev: v4.0.0
   hooks:
   - id: shfmt
 
