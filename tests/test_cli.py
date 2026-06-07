@@ -1,12 +1,16 @@
 from collections.abc import Generator
 from pathlib import Path
+import importlib
 
 import pytest
 from _pytest.capture import CaptureFixture
 from click.testing import CliRunner
+from pylatexenc.latexwalker import LatexWalkerParseError
 
 from bluetex.cli import main as legacy_main
 from bluetex.cli.main import main as click_main
+
+click_module = importlib.import_module("bluetex.cli.main")
 
 
 @pytest.fixture()  # type: ignore[untyped-decorator]
@@ -208,3 +212,21 @@ def test_click_cli_error_handling(tmp_path: Path) -> None:
 
     # Should handle the error gracefully
     assert result.exit_code != 0
+
+
+def test_click_cli_cleaning_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Test new Click CLI reports LaTeX parser failures."""
+    runner = CliRunner()
+    infile = tmp_path / "infile.tex"
+    infile.write_text(r"\broken")
+
+    def parse_error(_: str, __: bool, ___: bool) -> str:
+        raise LatexWalkerParseError("invalid latex")
+
+    monkeypatch.setattr(click_module, "clean", parse_error)
+
+    result = runner.invoke(click_main, [str(infile)])
+
+    assert result.exit_code == 1

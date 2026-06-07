@@ -10,6 +10,7 @@ from sys import version_info as vi
 
 import click
 from loguru import logger
+from pylatexenc.latexwalker import LatexWalkerError
 
 from ..__about__ import __version__
 from ..main import clean
@@ -102,43 +103,75 @@ def main(
     return_code = 0
 
     for infile in infile_paths:
-        logger.debug(f"Processing file: {infile}")
-
-        try:
-            with infile.open(encoding=encoding) as f:
-                content = f.read()
-        except Exception as e:
-            logger.error(f"Error reading file {infile}: {e}")
-            return_code = 1
-            continue
-
-        try:
-            cleaned_content = clean(content, keep_comments, keep_dollar)
-        except Exception as e:
-            logger.error(f"Error cleaning file {infile}: {e}")
-            return_code = 1
-            continue
-
-        if in_place:
-            # Check if content changed - return code 1 indicates changes were made
-            if content != cleaned_content:
-                return_code = 1
-
-            try:
-                with infile.open("w", encoding=encoding) as f:
-                    f.write(cleaned_content)
-                logger.info(f"Updated file: {infile}")
-            except Exception as e:
-                logger.error(f"Error writing file {infile}: {e}")
-                return_code = 1
-        else:
-            stdout_parts.append(cleaned_content)
+        output, file_return_code = _process_file(
+            infile, encoding, in_place, keep_comments, keep_dollar
+        )
+        return_code = max(return_code, file_return_code)
+        if output is not None:
+            stdout_parts.append(output)
 
     if not in_place:
         # Write to stdout without trailing newline for consistency with original behavior
         click.echo("\n".join(stdout_parts), nl=False)
 
     sys.exit(return_code)
+
+
+def _process_file(
+    infile: Path,
+    encoding: str | None,
+    in_place: bool,
+    keep_comments: bool,
+    keep_dollar: bool,
+) -> tuple[str | None, int]:
+    """Clean one file and return stdout content plus command return code."""
+    logger.debug(f"Processing file: {infile}")
+
+    content = _read_file(infile, encoding)
+    if content is None:
+        return None, 1
+
+    cleaned_content = _clean_file_content(infile, content, keep_comments, keep_dollar)
+    if cleaned_content is None:
+        return None, 1
+
+    if not in_place:
+        return cleaned_content, 0
+
+    write_return_code = _write_file(infile, cleaned_content, encoding)
+    content_return_code = int(content != cleaned_content)
+    return None, max(write_return_code, content_return_code)
+
+
+def _read_file(infile: Path, encoding: str | None) -> str | None:
+    try:
+        with infile.open(encoding=encoding) as f:
+            return f.read()
+    except (OSError, UnicodeError) as e:
+        logger.error(f"Error reading file {infile}: {e}")
+        return None
+
+
+def _clean_file_content(
+    infile: Path, content: str, keep_comments: bool, keep_dollar: bool
+) -> str | None:
+    try:
+        return clean(content, keep_comments, keep_dollar)
+    except LatexWalkerError as e:
+        logger.error(f"Error cleaning file {infile}: {e}")
+        return None
+
+
+def _write_file(infile: Path, content: str, encoding: str | None) -> int:
+    try:
+        with infile.open("w", encoding=encoding) as f:
+            f.write(content)
+    except OSError as e:
+        logger.error(f"Error writing file {infile}: {e}")
+        return 1
+
+    logger.info(f"Updated file: {infile}")
+    return 0
 
 
 if __name__ == "__main__":

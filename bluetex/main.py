@@ -177,7 +177,7 @@ def _replace_obsolete_text_mods(
         if child0.macroname == orig:
             node = _macro(repl, node.nodelist[1:])
             # If the previous node is a macro, wrap the \textit in curly braces.
-            if len(prev_nodes) > 0 and isinstance(prev_nodes[-1], LatexMacroNode):
+            if prev_nodes and isinstance(prev_nodes[-1], LatexMacroNode):
                 node = LatexGroupNode(nodelist=[node])
             break
 
@@ -255,7 +255,7 @@ def _add_backslash_for_keywords(
         return node
     if not isinstance(node, LatexCharsNode):
         return node
-    for keyword in ["max", "min", "log", "sin", "cos", "exp"]:
+    for keyword in ("max", "min", "log", "sin", "cos", "exp"):
         node.chars = node.chars.replace(keyword, f"\\{keyword}")
     return node
 
